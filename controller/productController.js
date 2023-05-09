@@ -17,15 +17,13 @@ const upload = multer({ storage: storage });
 // Create a new product
 const createProduct = async (req, res) => {
   try {
-    const { product_id, name, description, price, color, size, instock } = req.body;
+    const { product_id, name, description, price, instock } = req.body;
     const imageUrl = req.file ? req.file.path : null;
     const newProduct = new Product({
       product_id,
       name,
       description,
       price,
-      color,
-      size,
       instock,
       imageUrl,
     });
@@ -62,7 +60,7 @@ const getProductById = async (req, res) => {
 // Update a product by ID
 const updateProductById = async (req, res) => {
   try {
-    const { product_id, name, description, price, color, size, instock } = req.body;
+    const { product_id, name, description, price, instock } = req.body;
     const imageUrl = req.file ? req.file.path : null;
     const product = await Product.findById(req.params.id);
     if (!product) {
@@ -72,8 +70,6 @@ const updateProductById = async (req, res) => {
     product.name = name;
     product.description = description;
     product.price = price;
-    product.color = color;
-    product.size = size;
     product.instock = instock;
     product.imageUrl = imageUrl;
     await product.save();
