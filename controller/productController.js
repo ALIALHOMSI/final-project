@@ -1,98 +1,79 @@
 import Product from '../models/productModel.js';
-import multer from 'multer';
 
-// Set up multer storage engine
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'public/images');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  },
-});
-
-// Initialize multer upload with storage engine
-const upload = multer({ storage: storage });
-
-// Create a new product
-const createProduct = async (req, res) => {
+export const createProduct = async (req, res) => {
   try {
-    const { product_id, name, description, price, instock } = req.body;
-    const imageUrl = req.file ? req.file.path : null;
-    const newProduct = new Product({
-      product_id,
-      name,
-      description,
-      price,
-      instock,
-      imageUrl,
-    });
-    await newProduct.save();
-    res.status(201).json(newProduct);
+    const { name, description, price } = req.body;
+
+    const product = new Product({ name, description, price });
+    await product.save();
+
+    res.status(201).json(product);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Something went wrong.' });
+    console.error(error);
   }
 };
 
-// Get all products
-const getAllProducts = async (req, res) => {
+export const getProducts = async (req, res) => {
   try {
     const products = await Product.find();
-    res.status(200).json(products);
+    res.json(products);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Something went wrong.' });
+    console.error(error);
   }
 };
 
-// Get a single product by ID
-const getProductById = async (req, res) => {
+export const getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const { id } = req.params;
+
+    const product = await Product.findById(id);
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: 'Product not found.' });
     }
-    res.status(200).json(product);
+
+    res.json(product);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Something went wrong.' });
+    console.error(error);
   }
 };
 
-// Update a product by ID
-const updateProductById = async (req, res) => {
+export const updateProductById = async (req, res) => {
   try {
-    const { product_id, name, description, price, instock } = req.body;
-    const imageUrl = req.file ? req.file.path : null;
-    const product = await Product.findById(req.params.id);
+    const { id } = req.params;
+    const { name, description, price } = req.body;
+
+    const product = await Product.findByIdAndUpdate(
+      id,
+      { name, description, price },
+      { new: true } // return the updated document
+    );
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: 'Product not found.' });
     }
-    product.product_id = product_id;
-    product.name = name;
-    product.description = description;
-    product.price = price;
-    product.instock = instock;
-    product.imageUrl = imageUrl;
-    await product.save();
-    res.status(200).json(product);
+
+    res.json(product);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Something went wrong.' });
+    console.error(error);
   }
 };
 
-// Delete a product by ID
-const deleteProductById = async (req, res) => {
+export const deleteProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const { id } = req.params;
+
+    const product = await Product.findByIdAndDelete(id);
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: 'Product not found.' });
     }
-    await product.deleteOne();
-    res.status(200).json({ message: 'Product deleted successfully' });
+
+    res.json({ message: 'Product deleted.' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Something went wrong.' });
+    console.error(error);
   }
 };
-
-
-export { createProduct, getAllProducts, getProductById, updateProductById, deleteProductById, upload };
-
+export default {getProducts,getProductById,createProduct,updateProductById,deleteProductById}
