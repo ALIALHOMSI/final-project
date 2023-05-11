@@ -1,142 +1,95 @@
-import mongoose from 'mongoose';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
-
 import ProductImage from '../models/productImageModel.js';
 
+// configure multer storage
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // set the upload directory
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
   },
-  filename: (req, file, cb) => {
+  filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const extension = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + extension);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
   },
 });
 
-const fileFilter = (req, file, cb) => {
-  const allowedFileTypes = /jpeg|jpg|png/;
-  const extension = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimeType = allowedFileTypes.test(file.mimetype);
-
-  if (extension && mimeType) {
+// configure multer file filter
+const fileFilter = function (req, file, cb) {
+  if (
+    file.mimetype === 'image/jpeg' ||
+    file.mimetype === 'image/png' ||
+    file.mimetype === 'image/gif'
+  ) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only JPEG, JPG, and PNG image files are allowed.'));
+    cb(new Error('Invalid file type. Only JPEG, PNG, and GIF files are allowed.'));
   }
 };
 
-const upload = multer({
-  storage,
-  fileFilter,
-});
+// configure multer upload
+const upload = multer({ storage: storage, fileFilter: fileFilter });
 
-export const createProductImage = async (req, res) => {
+// CREATE product image
+async function createProductImage(req, res) {
   try {
-    const { productInfoId } = req.body;
-
-    const productImage = new ProductImage({ productInfoId, imageUrl: req.file.path });
-    await productImage.save();
-
-    res.status(201).json(productImage);
-  } catch (error) {
-    // if an error occurs, delete the uploaded file
-    if (req.file) {
-      fs.unlink(req.file.path, (err) => {
-        if (err) console.error(err);
-      });
-    }
-
-    res.status(500).json({ message: 'Something went wrong.' });
-    console.error(error);
+    const productImage = new ProductImage({
+      productInfoId: req.body.productInfoId,
+      imageUrl: req.file.path,
+    });
+    const savedProductImage = await productImage.save();
+    res.status(201).json(savedProductImage);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
-};
+}
 
-export const getProductImages = async (req, res) => {
+// READ all product images
+async function getAllProductImages(req, res) {
   try {
     const productImages = await ProductImage.find();
     res.json(productImages);
-  } catch (error) {
-    res.status(500).json({ message: 'Something went wrong.' });
-    console.error(error);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
-};
+}
 
-export const getProductImageById = async (req, res) => {
+// UPDATE product image
+async function updateProductImage(req, res) {
   try {
-    const { id } = req.params;
-
-    const productImage = await ProductImage.findById(id);
-    if (!productImage) {
-      return res.status(404).json({ message: 'ProductImage not found.' });
+    res.productImage.productInfoId = req.body.productInfoId;
+    if (req.file) {
+      res.productImage.imageUrl = req.file.path;
     }
-
-    res.json(productImage);
-  } catch (error) {
-    res.status(500).json({ message: 'Something went wrong.' });
-    console.error(error);
+    const updatedProductImage = await res.productImage.save();
+    res.json(updatedProductImage);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
-};
+}
 
-export const updateProductImageById = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { productInfoId } = req.body;
-  
-      const productImage = await ProductImage.findById(id);
-      if (!productImage) {
-        return res.status(404).json({ message: 'ProductImage not found.' });
-      }
-  
-      // delete the old image file
-      fs.unlink(productImage.imageUrl, (err) => {
-        if (err) console.error(err);
-      });
-  
-      // update the product image with the new image file
-      productImage.productInfoId = productInfoId;
-      productImage.imageUrl = req.file.path;
-      await productImage.save();
-  
-      res.json(productImage);
-    } catch (error) {
-      // if an error occurs, delete the uploaded file
-      if (req.file) {
-        fs.unlink(req.file.path, (err) => {
-          if (err) console.error(err);
-        });
-      }
-  
-      res.status(500).json({ message: 'Something went wrong.' });
-      console.error(error);
+// DELETE product image
+async function deleteProductImage(req, res) {
+  try {
+    await res.productImage.remove();
+    res.json({ message: 'Product image deleted successfully.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+// middleware function to get a product image by ID
+async function getProductImage(req, res, next) {
+  let productImage;
+  try {
+    productImage = await ProductImage.findById(req.params.id);
+    if (!productImage) {
+      return res.status(404).json({ message: 'Product image not found.' });
     }
-  };
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+  res.productImage = productImage;
+  next();
+}
 
-  export const deleteProductImageById = async (req, res) => {
-    try {
-      const { id } = req.params;
-  
-      const productImage = await ProductImage.findById(id);
-      if (!productImage) {
-        return res.status(404).json({ message: 'ProductImage not found.' });
-      }
-  
-      // delete the image file
-      fs.unlink(productImage.imageUrl, (err) => {
-        if (err) console.error(err);
-      });
-  
-      // delete the product image document from the database
-      await productImage.delete();
-  
-      res.json({ message: 'ProductImage deleted successfully.' });
-    } catch (error) {
-      res.status(500).json({ message: 'Something went wrong.' });
-      console.error(error);
-    }
-  };
-
-  export default{getProductImages,getProductImageById,createProductImage,updateProductImageById,deleteProductImageById}
-  
+export { createProductImage, getAllProductImages, updateProductImage, deleteProductImage, getProductImage };
