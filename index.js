@@ -8,6 +8,7 @@ import productsRoute from './routes/productRoute.js'
 import productInfoRoute from './routes/productInfoRoute.js'
 import productImageRoute from './routes/productImageRoute.js'
 import userRoute from './routes/userRoute.js'
+// import contactUsRoute from './routes/contactUsRoute.js'
 
 const app=express();
 dotenv.config()
@@ -24,6 +25,7 @@ app.use('/api/product',productsRoute);
 app.use('/api', userRoute);
 app.use('/api/productinfo',productInfoRoute)
 app.use('/api/productimage',productImageRoute)
+// app.use('/api/contactus',contactUsRoute)
 
 if (process.env.NODE_ENV === "development") {
   app.use(morgan('dev'));
