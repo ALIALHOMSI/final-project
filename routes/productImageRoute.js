@@ -5,15 +5,15 @@ import {
   updateProductImage,
   deleteProductImage,
   getAllProductImages,
-} from '../controllers/productImagesController.js';
+} from '../controller/productImagesController.js';
 import upload from '../utils/multer.js';
 
-const router = express.Router();
+const productImageRoute = express.Router();
 
-router.post('/create', upload.single('image'), createProductImage);
-router.get('/get/:id', getProductImage);
-router.put('/update/:id', updateProductImage);
-router.delete('/delete/:id', deleteProductImage);
-router.get('/getAll', getAllProductImages);
+productImageRoute.post('/create', upload.single('image'), createProductImage);
+productImageRoute.get('/get/:id', getProductImage);
+productImageRoute.put('/update/:id', updateProductImage);
+productImageRoute.delete('/delete/:id', deleteProductImage);
+productImageRoute.get('/getAll', getAllProductImages);
 
-export default router;
+export default productImageRoute;

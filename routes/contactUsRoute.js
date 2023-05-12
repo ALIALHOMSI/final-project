@@ -1,18 +1,18 @@
-// import express from 'express';
-// import {
-//   createContact,
-//   getAllContacts,
-//   updateContactById,
-//   deleteContactById
-// } from '../controller/contactUsController.js';
+import express from 'express';
+import {
+  createContact,
+  getAllContacts,
+  getContactById,
+  updateContactById,
+  deleteContactById
+} from '../controller/contactUsController.js';
 
-// const router = express.Router();
-// import { isAdmin } from '../middleware/authMiddleware.js';
-// import { authenticateToken } from '../middleware/authMiddleware.js';
+const contactRoute = express.Router();
 
-// router.post('/create', createContact);
-// router.get('/getAll', getAllContacts);
-// router.put('/update/:contactId', updateContactById);
-// router.delete('/delete/:contactId', deleteContactById);
+contactRoute.post('/create', createContact);
+contactRoute.get('/getAll', getAllContacts);
+contactRoute.get('/:id',getContactById);
+contactRoute.put('/update/:contactId', updateContactById);
+contactRoute.delete('/delete/:contactId', deleteContactById);
 
-// export default router;
+export default contactRoute;
