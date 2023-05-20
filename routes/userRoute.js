@@ -2,24 +2,27 @@ import express from 'express';
 import {
   createUser,
   getAllUsers,
+  getUserById,
   updateUserById,
   deleteUserById,
   registerUser,
   loginUser
 } from '../controller/userController.js';
-const userRoute = express.Router();
+
+const router = express.Router();
 
 import { isAdmin } from '../middleware/authMiddleware.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 
-userRoute.post('/create', createUser);
-userRoute.get('/getAll' ,getAllUsers);
-userRoute.put('/update/:userId', updateUserById); 
-userRoute.delete('/delete/:userId', deleteUserById);
+router.post('/create', createUser);
+router.get('/getAll',getAllUsers);
+router.put('/update/:userId', updateUserById);
+router.delete('/delete/:userId', deleteUserById);
 
-userRoute.post('/register', registerUser);
-userRoute.post('/login', loginUser);
+router.post('/register', registerUser);
+router.post('/login', loginUser);
 
 
 
-export default userRoute;
+export default router;
+

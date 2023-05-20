@@ -2,9 +2,9 @@ import Product from '../models/productModel.js';
 
 export const createProduct = async (req, res) => {
   try {
-    const { name, description, price } = req.body;
+    const { name, description} = req.body;
 
-    const product = new Product({ name, description, price });
+    const product = new Product({ name, description});
     await product.save();
 
     res.status(201).json(product);
@@ -43,11 +43,11 @@ export const getProductById = async (req, res) => {
 export const updateProductById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, price } = req.body;
+    const { name, description} = req.body;
 
     const product = await Product.findByIdAndUpdate(
       id,
-      { name, description, price },
+      { name, description},
       { new: true } // return the updated document
     );
     if (!product) {

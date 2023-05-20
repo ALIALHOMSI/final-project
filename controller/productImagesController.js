@@ -1,95 +1,138 @@
+import express from 'express';
 import multer from 'multer';
+import mongoose from 'mongoose';
 import path from 'path';
+import fs from 'fs';
 import ProductImage from '../models/productImageModel.js';
 
-// configure multer storage
+const router = express.Router();
+
+// Multer configuration for storing images
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
+  destination: (req, file, cb) => {
+    cb(null, 'public'); // Set the destination folder as 'public'
   },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now().toString() + Math.floor(Math.random() * 100000000);
+    const fileExtension = path.extname(file.originalname);
+    cb(null, uniqueName + fileExtension); // Set the filename as a unique 10-digit number
   },
 });
 
-// configure multer file filter
-const fileFilter = function (req, file, cb) {
-  if (
-    file.mimetype === 'image/jpeg' ||
-    file.mimetype === 'image/png' ||
-    file.mimetype === 'image/gif'
-  ) {
-    cb(null, true);
+const imageFilter = (req, file, cb) => {
+  const allowedExtensions = ['.jpg','.png', '.gif'];
+  const fileExtension = path.extname(file.originalname).toLowerCase();
+
+  if (allowedExtensions.includes(fileExtension)) {
+    cb(null, true); // Accept the file
   } else {
-    cb(new Error('Invalid file type. Only JPEG, PNG, and GIF files are allowed.'));
+    cb(new Error('Invalid file type. Only jpg, PNG, and GIF files are allowed.'), false); // Reject the file
   }
 };
 
-// configure multer upload
-const upload = multer({ storage: storage, fileFilter: fileFilter });
+const upload = multer({ storage, fileFilter: imageFilter });
 
-// CREATE product image
-async function createProductImage(req, res) {
-  try {
-    const productImage = new ProductImage({
-      productInfoId: req.body.productInfoId,
-      imageUrl: req.file.path,
-    });
-    const savedProductImage = await productImage.save();
-    res.status(201).json(savedProductImage);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-}
-
-// READ all product images
-async function getAllProductImages(req, res) {
+// GET all product images
+export const getAllProductImages = async (req, res) => {
   try {
     const productImages = await ProductImage.find();
     res.json(productImages);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
   }
-}
+};
 
-// UPDATE product image
-async function updateProductImage(req, res) {
-  try {
-    res.productImage.productInfoId = req.body.productInfoId;
-    if (req.file) {
-      res.productImage.imageUrl = req.file.path;
-    }
-    const updatedProductImage = await res.productImage.save();
-    res.json(updatedProductImage);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+// GET a single product image by ID
+export const getProductImageById = async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ error: 'Invalid product image ID' });
   }
-}
 
-// DELETE product image
-async function deleteProductImage(req, res) {
   try {
-    await res.productImage.remove();
-    res.json({ message: 'Product image deleted successfully.' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-}
-
-// middleware function to get a product image by ID
-async function getProductImage(req, res, next) {
-  let productImage;
-  try {
-    productImage = await ProductImage.findById(req.params.id);
+    const productImage = await ProductImage.findById(id);
     if (!productImage) {
-      return res.status(404).json({ message: 'Product image not found.' });
+      return res.status(404).json({ error: 'Product image not found' });
     }
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+    res.json(productImage);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
   }
-  res.productImage = productImage;
-  next();
-}
+};
 
-export { createProductImage, getAllProductImages, updateProductImage, deleteProductImage, getProductImage };
+// Create a new product image
+export const createProductImage = async (req, res) => {
+  try {
+    const { productInfoId } = req.body;
+    const { filename } = req.file;
+
+    const productImage = new ProductImage({
+      productInfoId,
+      imageUrl: filename,
+    });
+
+    await productImage.save();
+
+    res.status(201).json(productImage);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Delete a product image
+export const deleteProductImage = async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ error: 'Invalid product image ID' });
+  }
+
+  try {
+    const productImage = await ProductImage.findByIdAndDelete(id);
+    if (!productImage) {
+      return res.status(404).json({ error: 'Product image not found' });
+    }
+
+    // Delete the associated image file from the 'public' folder
+    const imagePath = path.join(__dirname, '../public', productImage.imageUrl);
+    fs.unlinkSync(imagePath);
+
+    res.sendStatus(204);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Update a product image
+export const updateProductImage = async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ error: 'Invalid product image ID' });
+  }
+
+  try {
+    const { productInfoId } = req.body;
+    const { filename } = req.file;
+
+    const productImage = await ProductImage.findByIdAndUpdate(
+      id,
+      {
+        productInfoId,
+        imageUrl: filename,
+      },
+      { new: true }
+    );
+
+    if (!productImage) {
+      return res.status(404).json({ error: 'Product image not found' });
+    }
+
+    // Delete the previous image file from the 'public' folder
+    const imagePath = path.join(__dirname, '../public', productImage.imageUrl);
+    fs.unlinkSync(imagePath);
+
+    res.json(productImage);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+export default {getAllProductImages,getProductImageById,createProductImage,deleteProductImage,updateProductImage}
