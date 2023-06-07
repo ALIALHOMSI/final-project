@@ -3,12 +3,12 @@ import Cart from '../models/cartModel.js';
 // Create a new item in the cart
 export const createCartItem = async (req, res) => {
   try {
-    const { userId, productInfoId, productImageId, quantity } = req.body;
+    const { userId, productInfoId, productImageId, cartItemQuantity } = req.body;
     const newCartItem = new Cart({
       userId,
       productInfoId,
       productImageId,
-      quantity,
+      cartItemQuantity,
     });
     const savedCartItem = await newCartItem.save();
     res.status(201).json(savedCartItem);
@@ -20,7 +20,7 @@ export const createCartItem = async (req, res) => {
 
 // Get all items in the cart
 export const getAllCartItems = async (req, res) => {
-  try {
+  try { 
     const cartItems = await Cart.find();
     res.json(cartItems);
   } catch (err) {
@@ -62,23 +62,25 @@ export const updateCartItemById = async (req, res) => {
 };
 
 // Delete a specific item in the cart by its ID
-export const deleteCartItemById = async (req, res) => {
+export const deleteAllCartItems = async (req, res) => {
   try {
-    const deletedCartItem = await Cart.findByIdAndDelete(req.params.cartItemId);
-    if (!deletedCartItem) {
-      return res.status(404).json({ error: 'Cart item not found' });
+    const deletedCartItems = await Cart.deleteMany();
+    if (deletedCartItems.deletedCount === 0) {
+      return res.status(404).json({ error: 'No cart items found' });
     }
-    res.json({ message: 'Cart item deleted successfully' });
+    res.json({ message: 'All cart items deleted successfully' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 };
 
+
 export default {
   createCartItem,
   getAllCartItems,
   getCartItemById,
   updateCartItemById,
-  deleteCartItemById,
+  deleteAllCartItems,
 };
+ 

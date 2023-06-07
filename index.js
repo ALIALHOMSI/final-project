@@ -10,6 +10,8 @@ import productImageRoute from './routes/productImageRoute.js'
 import userRoute from './routes/userRoute.js' 
 import contactRoute from './routes/contactUsRoute.js'
 import cartRoute from './routes/cartRoute.js'
+import aboutUs from './routes/aboutRoute.js'
+import testimonial  from './routes/testimonialRoute.js'
 const app=express();
 dotenv.config()
 await db()
@@ -22,11 +24,13 @@ app.use(bodyParser.json());
 
 // app.use('/api',productsroute)
 app.use('/api/product',productRoute);
-app.use('/api', userRoute);
+app.use('/api/user', userRoute);
 app.use('/api/productinfo',productInfoRoute)
 app.use('/api/productimage',productImageRoute)
 app.use('/api/contactus',contactRoute)
 app.use('/api/cart',cartRoute)
+app.use('/api/aboutus',aboutUs)
+app.use('/api/testimonial',testimonial)
 
 if (process.env.NODE_ENV === "development") {
   app.use(morgan('dev'));

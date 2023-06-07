@@ -1,138 +1,188 @@
-import express from 'express';
 import multer from 'multer';
-import mongoose from 'mongoose';
-import path from 'path';
-import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { v4 as uuidv4 } from 'uuid';
 import ProductImage from '../models/productImageModel.js';
+import cloudinary from 'cloudinary';
+import dotenv from 'dotenv';
 
-const router = express.Router();
+// Get the directory path of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-// Multer configuration for storing images
+// Multer configuration
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'public'); // Set the destination folder as 'public'
-  },
+  destination: join(__dirname, '../uploads'),
   filename: (req, file, cb) => {
-    const uniqueName = Date.now().toString() + Math.floor(Math.random() * 100000000);
-    const fileExtension = path.extname(file.originalname);
-    cb(null, uniqueName + fileExtension); // Set the filename as a unique 10-digit number
+    const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
+    cb(null, uniqueName);
   },
 });
 
-const imageFilter = (req, file, cb) => {
-  const allowedExtensions = ['.jpg','.png', '.gif'];
-  const fileExtension = path.extname(file.originalname).toLowerCase();
+const upload = multer({ storage });
 
-  if (allowedExtensions.includes(fileExtension)) {
-    cb(null, true); // Accept the file
-  } else {
-    cb(new Error('Invalid file type. Only jpg, PNG, and GIF files are allowed.'), false); // Reject the file
-  }
-};
+dotenv.config();
 
-const upload = multer({ storage, fileFilter: imageFilter });
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-// GET all product images
-export const getAllProductImages = async (req, res) => {
+// Create a product image
+const createProductImage = async (req, res) => {
   try {
-    const productImages = await ProductImage.find();
-    res.json(productImages);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-// GET a single product image by ID
-export const getProductImageById = async (req, res) => {
-  const { id } = req.params;
-  if (!mongoose.isValidObjectId(id)) {
-    return res.status(400).json({ error: 'Invalid product image ID' });
-  }
-
-  try {
-    const productImage = await ProductImage.findById(id);
-    if (!productImage) {
-      return res.status(404).json({ error: 'Product image not found' });
+    // Check if the request contains an image
+    if (!req.file) {
+      return res.status(400).json({ message: 'Please upload an image' });
     }
-    res.json(productImage);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
 
-// Create a new product image
-export const createProductImage = async (req, res) => {
-  try {
-    const { productInfoId } = req.body;
-    const { filename } = req.file;
+    // Upload the image to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path);
 
+    // Create a new ProductImage instance
     const productImage = new ProductImage({
-      productInfoId,
-      imageUrl: filename,
+      productInfoId: req.body.productInfoId,
+      imageUrl: result.secure_url,
     });
 
+    // Save the product image to MongoDB
     await productImage.save();
 
-    res.status(201).json(productImage);
+    // Return a response with the saved product image
+    return res.json({ message: 'Image uploaded successfully', productImage });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-// Delete a product image
-export const deleteProductImage = async (req, res) => {
-  const { id } = req.params;
-  if (!mongoose.isValidObjectId(id)) {
-    return res.status(400).json({ error: 'Invalid product image ID' });
-  }
 
+// Get all product images
+const getAllProductImages = async (req, res) => {
   try {
-    const productImage = await ProductImage.findByIdAndDelete(id);
+    // Retrieve all product images from MongoDB
+    const productImages = await ProductImage.find();
+
+    // Return a response with the product images
+    return res.json(productImages);
+  } catch (error) {
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Get a single product image by ID
+const getProductImageById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Retrieve the product image from MongoDB
+    const productImage = await ProductImage.findById(id);
+
+    // Check if the product image exists
     if (!productImage) {
-      return res.status(404).json({ error: 'Product image not found' });
+      return res.status(404).json({ message: 'Product image not found' });
     }
 
-    // Delete the associated image file from the 'public' folder
-    const imagePath = path.join(__dirname, '../public', productImage.imageUrl);
-    fs.unlinkSync(imagePath);
+    // Fetch the image from Cloudinary
+    const result = await cloudinary.uploader.upload(productImage.imageUrl);
 
-    res.sendStatus(204);
+    // Update the product image's imageUrl with the secure URL from Cloudinary
+    productImage.imageUrl = result.secure_url;
+
+    // Return a response with the product image
+    return res.json(productImage);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-// Update a product image
-export const updateProductImage = async (req, res) => {
-  const { id } = req.params;
-  if (!mongoose.isValidObjectId(id)) {
-    return res.status(400).json({ error: 'Invalid product image ID' });
-  }
-
+// Update a product image by ID
+// Update a product image by ID
+const updateProductImageById = async (req, res) => {
   try {
-    const { productInfoId } = req.body;
-    const { filename } = req.file;
+    const { id } = req.params;
 
-    const productImage = await ProductImage.findByIdAndUpdate(
-      id,
-      {
-        productInfoId,
-        imageUrl: filename,
-      },
-      { new: true }
-    );
+    // Retrieve the product image from MongoDB
+    const productImage = await ProductImage.findById(id);
 
+    // Check if the product image exists
     if (!productImage) {
-      return res.status(404).json({ error: 'Product image not found' });
+      return res.status(404).json({ message: 'Product image not found' });
     }
 
-    // Delete the previous image file from the 'public' folder
-    const imagePath = path.join(__dirname, '../public', productImage.imageUrl);
-    fs.unlinkSync(imagePath);
+    // Upload the new image to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path);
 
-    res.json(productImage);
+    // Delete the old image from Cloudinary
+    await cloudinary.uploader.destroy(productImage.publicId);
+
+    // Update the product image's imageUrl and publicId with the new values
+    productImage.imageUrl = result.secure_url;
+    productImage.publicId = result.public_id;
+
+    // Save the updated product image to MongoDB
+    await productImage.save();
+
+    // Return a response with the updated product image
+    return res.json({ message: 'Product image updated successfully', productImage });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
-export default {getAllProductImages,getProductImageById,createProductImage,deleteProductImage,updateProductImage}
+
+
+// Delete a product image by ID
+// Delete a product image by ID
+const deleteProductImageById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Retrieve the product image from MongoDB
+    const productImage = await ProductImage.findById(id);
+
+    // Check if the product image exists
+    if (!productImage) {
+      return res.status(404).json({ message: 'Product image not found' });
+    }
+
+    // Delete the image from Cloudinary
+    await cloudinary.uploader.destroy(productImage.publicId);
+
+    // Remove the product image from MongoDB
+    await ProductImage.findByIdAndRemove(id);
+
+    // Return a response indicating successful deletion
+    return res.json({ message: 'Product image deleted successfully' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+import path from 'path';
+import fs from 'fs';
+
+export const getImage = (req, res) => {
+  const { filename } = req.params;
+  const imagePath = path.join(__dirname, '../uploads', filename);
+
+  // Check if the file exists
+  fs.access(imagePath, fs.constants.F_OK, (err) => {
+    if (err) {
+      // File does not exist
+      return res.status(404).json({ error: 'Image not found' });
+    }
+
+    // Stream the image file as the response
+    res.sendFile(imagePath);
+  });
+};
+
+export {
+  createProductImage,
+  getAllProductImages,
+  getProductImageById,
+  updateProductImageById,
+  deleteProductImageById,
+  
+};

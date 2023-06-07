@@ -17,10 +17,11 @@ const cartSchema = new mongoose.Schema({
     ref: 'ProductImage',
     required: true,
   },
-  quantity: {
+  cartItemQuantity: {
     type: Number,
     required: true,
-  },
+  }
 });
-
+ 
 export default mongoose.model('Cart', cartSchema);
+ 

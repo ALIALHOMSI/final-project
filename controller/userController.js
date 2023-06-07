@@ -1,6 +1,7 @@
 import User from '../models/userModel.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import nodemailer from 'nodemailer';
 
 export const createUser = async (req, res) => {
   try {
@@ -105,27 +106,61 @@ export const registerUser = async (req, res) => {
     });
 
     if (user) {
-      res.status(201).json({
-        _id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        token: generateToken(user._id),
+      // Generate OTP
+      const otp = generateOTP(); // Implement your OTP generation logic
+
+      // Store the OTP in the user object
+      user.otp = otp;
+      await user.save();
+
+      // Send verification email
+      const transporter = nodemailer.createTransport({
+        service: 'Gmail', // Replace with the email service you are using (e.g., Gmail, Outlook, etc.)
+        auth: {
+          user: 'tmailer853@gmail.com',
+          pass: 'vmyosxmrlazkukew',
+        },
+      });  
+
+      const mailOptions = {
+        from: 'tmailer853@gmail.com', // Replace with your email address
+        to: user.email,
+        subject: 'Account Verification',
+        text: `Your verification code is ${otp}`,
+        // Alternatively, you can send a verification link instead of a code
+        // html: `Click <a href="http://your-verification-link">here</a> to verify your account.`,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error('Error sending verification email:', error);
+          res.status(500).json({ error: 'Failed to send verification email' });
+        } else {
+          console.log('Verification email sent:', info.response);
+          res.status(201).json({
+            _id: user._id,
+            fullName: user.fullName,
+            email: user.email,
+          });
+        }
       });
     } else {
       res.status(400);
       throw new Error('Invalid user data');
     }
   } catch (err) {
-    if (err.code === 11000 && err.keyValue && err.keyValue.userId != null) {
-      // Duplicate key error for userId
-      res.status(400).json({ error: 'User ID must be unique' });
-    } else {
-      console.error(err);
-      res.status(500).json({ error: 'Server error' });
-    }
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
+// Helper function to generate OTP
+const generateOTP = () => {
+  // Implement your OTP generation logic here
+  // For example, you can use a random number generator to generate a 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000);
+  return otp.toString();
+};
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -167,4 +202,25 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: '30d',
   });
+};
+
+export const verifyOTP = async (req, res) => {
+  try {
+    const { otp } = req.body;
+
+    const user = await User.findOne({ otp });
+
+    if (!user) {
+      return res.status(404).json({ error: "Invalid OTP" });
+    }
+
+    // Clear the OTP field in the user object
+    user.otp = "";
+    await user.save();
+
+    res.json({ message: "OTP verified successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
 };

@@ -2,9 +2,9 @@ import ProductInfo from '../models/productInfoModel.js';
 
 export const createProductInfo = async (req, res) => {
   try {
-    const { productId, color, size,price, quantity } = req.body;
+    const { productId, color, size, gender, price, quantity, type } = req.body;
 
-    const productInfo = new ProductInfo({ productId, color, size,price, quantity });
+    const productInfo = new ProductInfo({ productId, color, size, gender, price, quantity, type });
     await productInfo.save();
 
     res.status(201).json(productInfo);
@@ -13,6 +13,7 @@ export const createProductInfo = async (req, res) => {
     console.error(error);
   }
 };
+
 
 export const getProductInfos = async (req, res) => {
   try {
@@ -43,11 +44,11 @@ export const getProductInfoById = async (req, res) => {
 export const updateProductInfoById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { productId, color, size,price, quantity } = req.body;
+    const { productId, color, size, gender, price, quantity, type } = req.body;
 
     const productInfo = await ProductInfo.findByIdAndUpdate(
       id,
-      { productId, color, size,price, quantity },
+      { productId, color, size, gender, price, quantity, type },
       { new: true } // return the updated document
     );
     if (!productInfo) {
@@ -60,6 +61,7 @@ export const updateProductInfoById = async (req, res) => {
     console.error(error);
   }
 };
+
 
 export const deleteProductInfoById = async (req, res) => {
   try {
