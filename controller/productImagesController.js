@@ -6,7 +6,7 @@ import ProductImage from '../models/productImageModel.js';
 import cloudinary from 'cloudinary';
 import dotenv from 'dotenv';
 
-// Get the directory path of the current module
+// Get the directory path of the current file
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -31,7 +31,7 @@ cloudinary.config({
 });
 
 // Create a product image
-const createProductImage = async (req, res) => {
+const createProductImage = async (req, res) => { 
   try {
     // Check if the request contains an image
     if (!req.file) {
@@ -159,24 +159,7 @@ const deleteProductImageById = async (req, res) => {
   }
 };
 
-import path from 'path';
-import fs from 'fs';
 
-export const getImage = (req, res) => {
-  const { filename } = req.params;
-  const imagePath = path.join(__dirname, '../uploads', filename);
-
-  // Check if the file exists
-  fs.access(imagePath, fs.constants.F_OK, (err) => {
-    if (err) {
-      // File does not exist
-      return res.status(404).json({ error: 'Image not found' });
-    }
-
-    // Stream the image file as the response
-    res.sendFile(imagePath);
-  });
-};
 
 export {
   createProductImage,

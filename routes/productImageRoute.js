@@ -5,7 +5,6 @@ import {
   updateProductImageById,
   deleteProductImageById,
   getAllProductImages,
-  getImage
 } from '../controller/productImagesController.js';
 import upload from '../utils/multer.js';
 
@@ -16,6 +15,5 @@ productImageRoute.get('/get/:id', getProductImageById);
 productImageRoute.put('/update/:id',updateProductImageById);
 productImageRoute.delete('/delete/:id', deleteProductImageById);
 productImageRoute.get('/getAll', getAllProductImages);
-productImageRoute.get('/:filename', getImage);
 
 export default productImageRoute; 

@@ -9,7 +9,7 @@ export const authenticateToken = async (req, res, next) => {
     : null;
 
   if (!token) {
-    res.status(401);
+    res.status(401); 
     throw new Error('Authorization token not found');
   }
 
