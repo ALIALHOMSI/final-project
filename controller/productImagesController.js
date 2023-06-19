@@ -98,7 +98,6 @@ const getProductImageById = async (req, res) => {
 };
 
 // Update a product image by ID
-// Update a product image by ID
 const updateProductImageById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -132,7 +131,6 @@ const updateProductImageById = async (req, res) => {
 };
 
 
-// Delete a product image by ID
 // Delete a product image by ID
 const deleteProductImageById = async (req, res) => {
   try {

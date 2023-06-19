@@ -13,8 +13,7 @@ import {
 
 const router = express.Router();
 
-import { isAdmin } from '../middleware/authMiddleware.js';
-import { authenticateToken } from '../middleware/authMiddleware.js';
+
 
 router.post('/create', createUser);
 router.get('/getAll',getAllUsers);

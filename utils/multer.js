@@ -6,7 +6,7 @@ export default multer({
   storage: multer.diskStorage({
    
     filename: (req, file, cb) => {
-      // Generate a unique name for the file
+
       const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(
         file.originalname
       )}`;

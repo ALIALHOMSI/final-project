@@ -107,7 +107,7 @@ export const registerUser = async (req, res) => {
 
     if (user) {
       // Generate OTP
-      const otp = generateOTP(); // Implement your OTP generation logic
+      const otp = generateOTP(); 
 
       // Store the OTP in the user object
       user.otp = otp;
@@ -115,7 +115,7 @@ export const registerUser = async (req, res) => {
 
       // Send verification email
       const transporter = nodemailer.createTransport({
-        service: 'Gmail', // Replace with the email service you are using (e.g., Gmail, Outlook, etc.)
+        service: 'Gmail',
         auth: {
           user: 'tmailer853@gmail.com',
           pass: 'vmyosxmrlazkukew',
@@ -123,12 +123,11 @@ export const registerUser = async (req, res) => {
       });  
 
       const mailOptions = {
-        from: 'tmailer853@gmail.com', // Replace with your email address
+        from: 'tmailer853@gmail.com',
         to: user.email,
         subject: 'Account Verification',
         text: `Your verification code is ${otp}`,
-        // Alternatively, you can send a verification link instead of a code
-        // html: `Click <a href="http://your-verification-link">here</a> to verify your account.`,
+
       };
 
       transporter.sendMail(mailOptions, (error, info) => {
@@ -154,10 +153,8 @@ export const registerUser = async (req, res) => {
   }
 };
 
-// Helper function to generate OTP
 const generateOTP = () => {
-  // Implement your OTP generation logic here
-  // For example, you can use a random number generator to generate a 6-digit OTP
+  
   const otp = Math.floor(100000 + Math.random() * 900000);
   return otp.toString();
 };

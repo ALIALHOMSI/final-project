@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-//models for contact
 const contactAdminSchema = new mongoose.Schema({
    
     adminPhoneNumber: {

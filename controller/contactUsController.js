@@ -5,13 +5,13 @@ import Contact from '../models/contactUsModel.js';
   
  export const createContact = async (req, res) => {
     try {
-      console.log(req.body); // add this line to log the request body
+      console.log(req.body); 
       const { name, email, phoneNumber, message  } = req.body;
       if (!name || !email || !phoneNumber || !message ) {
         return res.status(400).json({ error: 'All fields are required' });
       }
       const newContact = await Contact.create({ name, email, phoneNumber, message  });
-      console.log(newContact); // add this line to log the new contact
+      console.log(newContact); 
       res.status(201).json(newContact);
     } catch (err) {
       console.error(err);

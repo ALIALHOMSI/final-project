@@ -5,7 +5,7 @@ const cartSchema = new mongoose.Schema({
     type: Number,
     ref: 'User',
     required: true,
-    path: '_id', // Update to match the appropriate field name in the User model
+    path: '_id', 
   },
   productInfoId: {
     type: mongoose.Schema.Types.ObjectId,
