@@ -18,7 +18,22 @@ const productInfoSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  price: {
+    type: Number,
+    required: true,
+  },
+  gender: {
+    type: String,
+    enum: ['male', 'female', 'unisex'],
+    required: true,
+  },
+  type: {
+    type: String,
+    enum: ['shirt', 'pants', 'shoes'],
+    required: true,
+  },
 });
+
 
 const ProductInfo = mongoose.model('ProductInfo', productInfoSchema);
 

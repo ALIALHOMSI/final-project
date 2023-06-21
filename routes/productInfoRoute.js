@@ -7,12 +7,12 @@ import {
   getProductInfos,
 } from '../controller/productInfoConrtoller.js';
 
-const router = express.Router();
+const productInfoRoute = express.Router();
 
-router.post('/create', createProductInfo);
-router.get('/get/:id', getProductInfoById);
-router.put('/update/:id', updateProductInfoById);
-router.delete('/delete/:id', deleteProductInfoById);
-router.get('/getAll', getProductInfos);
-
-export default router;
+productInfoRoute.post('/create', createProductInfo);
+productInfoRoute.get('/get/:id', getProductInfoById);
+productInfoRoute.put('/update/:id', updateProductInfoById);
+productInfoRoute.delete('/delete/:id', deleteProductInfoById);
+productInfoRoute.get('/getAll', getProductInfos);
+ 
+export default productInfoRoute; 

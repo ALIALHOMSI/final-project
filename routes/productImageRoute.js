@@ -1,19 +1,19 @@
 import express from 'express';
 import {
   createProductImage,
-  getProductImage,
-  updateProductImage,
-  deleteProductImage,
+  getProductImageById,
+  updateProductImageById,
+  deleteProductImageById,
   getAllProductImages,
 } from '../controller/productImagesController.js';
 import upload from '../utils/multer.js';
 
-const router = express.Router();
+const productImageRoute = express.Router();
 
-router.post('/create', upload.single('image'), createProductImage);
-router.get('/get/:id', getProductImage);
-router.put('/update/:id', updateProductImage);
-router.delete('/delete/:id', deleteProductImage);
-router.get('/getAll', getAllProductImages);
+productImageRoute.post('/create', upload.single('image'), createProductImage);
+productImageRoute.get('/get/:id', getProductImageById);
+productImageRoute.put('/update/:id',updateProductImageById);
+productImageRoute.delete('/delete/:id', deleteProductImageById);
+productImageRoute.get('/getAll', getAllProductImages);
 
-export default router;
+export default productImageRoute; 
